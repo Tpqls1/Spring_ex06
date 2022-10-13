@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.BoardMapper">
+<!-- 공통부분 : 자바의 메소드에 해당 -->
+<sql id="criteria">
+	<trim prefix=" AND (" suffix=")" prefixOverrides="OR">
+	  <foreach item='type' collection="typeArr">
+	  	<trim prefix="OR">
+	  	  <choose>
+	  	    <when test="type == 'T'.toString()">
+	  	      title like CONCAT('%', #{keyword}, '%')
+	  	    </when>
+	  	    <when test="type == 'C'.toString()">
+	  	      content like CONCAT('%', #{keyword}, '%')
+	  	    </when>
+	  	    <when test="type == 'W'.toString()">
+	  	      writer like CONCAT('%', #{keyword}, '%')
+	  	    </when>
+	  	  </choose>
+	  	</trim>
+	  </foreach>
+	</trim>
+</sql>
+<!-- MyBatis의 규칙 : SQL 문장에 < 또는 > 가 있을 경우 CDATA로 감싸주어야 한다.
+>가 없을 경우 CDATA 구문은 불필요하다.
+ -->
+<select id="getList" resultType="org.zerock.domain.BoardVO">
+<![CDATA[
+select * from tbl_board where bno > 0 order by bno desc
+]]>
+</select>
+<select id="getListWithPaging" resultType="org.zerock.domain.BoardVO">
+<![CDATA[
+select * from tbl_board where bno > 0
+]]>
+<include refid="criteria"></include>
+order by bno desc limit #{pageStart}, #{amount}
+</select>
+<select id="getTotalCount" resultType="int">
+<![CDATA[
+select count(*) from tbl_board where bno > 0
+]]>
+<include refid="criteria"></include>
+</select>
+<insert id="insert">
+insert into tbl_board (title, content, writer)
+	values (#{title}, #{content}, #{writer})
+</insert>
+<insert id="insertSelectKey" useGeneratedKeys="true" keyProperty="bno" keyColumn="bno">
+insert into tbl_board (title, content, writer)
+	values (#{title}, #{content}, #{writer})
+<selectKey keyProperty="bno" order="AFTER" resultType="Integer">
+select last_insert_id() as bno
+</selectKey>
+</insert>
+<select id="read" resultType="org.zerock.domain.BoardVO">
+select * from tbl_board where bno = #{bno}
+</select>
+<!-- 작성자는 수정하지 못하도록 정책을 정하였다. -->
+<update id="update">
+update tbl_board set title=#{title}, content=#{content} where bno = #{bno}
+</update>
+<delete id="delete">
+delete from tbl_board where bno = #{bno}
+</delete>
+</mapper>

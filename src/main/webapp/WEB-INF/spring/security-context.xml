@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 403 금지를 처리하는 구현 객체를 빈으로 등록 -->
+	<bean id="customAccessDenied" class="org.zerock.security.CustomAccessDeniedHandler"></bean>
+	
+	<security:http auto-config="true" use-expressions="true">
+		<!-- 서비스 기능 중에 접근할 수 있는 기능에 대한 설정 : 권한에 따른 사용 가능 여부 -->
+		<security:intercept-url pattern="/security/all" access="permitAll"/>
+		<security:intercept-url pattern="/security/member" access="hasRole('ROLE_MEMBER')"/>
+		<security:intercept-url pattern="/security/admin" access="hasRole('ROLE_ADMIN')"/>
+		<!-- 로그인 폼을 자동으로 띄워준다. 화면 jsp파일을 만들어주지 않아도 
+		spring security가 제공하는 로그인 폼을 사용한다. url : /login
+		<security:form-login/>
+		-->
+		<!-- 애플리케이션에서 제공하는 로그인 페이지를 사용하도록 설정 : /customLogin -->
+		<security:form-login login-page="/customLogin"/>
+		<!-- 접근 금지 : error code 403에 대하여 사용자에게 안내 -->
+		<!-- 
+		<security:access-denied-handler error-page="/accessError"/>
+		 -->
+		 <!-- 별도로 핸들러를 정의해주면 더 많은것에 대하여 처리해 줄 수 있다. -->
+		<security:access-denied-handler ref="customAccessDenied"/>
+	</security:http>
+	
+	<!-- 인증과 허가를 담당하는 모듈 -->
+	<security:authentication-manager>
+		<security:authentication-provider>
+			<!-- 사용자를 추가 -->
+			<security:user-service>
+				<!-- username : member, password: member, 권한 : 회원
+				{noop} : 암호화를 적용하지 않는다.
+				기본적으로 비밀번호에 대하여 암호화를 적용하는 것이 일반적이다. -->
+				<security:user name="member" password="{noop}member" authorities="ROLE_MEMBER"/>
+				<security:user name="admin" password="{noop}admin" authorities="ROLE_MEMBER, ROLE_ADMIN"/>
+			</security:user-service>
+		</security:authentication-provider>
+	</security:authentication-manager>
+</beans>
